@@ -27,7 +27,9 @@ android {
     }
     buildTypes {
         debug {
-            resValue("string", "firebase_app_check_debug_token", localProps.getProperty("appcheck.debugToken", ""))
+            // -PappcheckDebugToken=... overrides local.properties (used for the judges' build).
+            val token = (project.findProperty("appcheckDebugToken") as String?) ?: localProps.getProperty("appcheck.debugToken", "")
+            resValue("string", "firebase_app_check_debug_token", token)
         }
         release {
             isMinifyEnabled = false
