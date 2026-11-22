@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "510460318381",
+    "project_id": "scam-shield-hybrid",
+    "storage_bucket": "scam-shield-hybrid.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:510460318381:android:d59165a62afbbec800ec24",
+        "android_client_info": {
+          "package_name": "ng.scamshield.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqXHN2t6ohFkhtgnby0rLymD05dnykFOo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
