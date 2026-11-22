@@ -127,11 +127,20 @@ export async function* explain(outcome: CheckOutcome, language: LanguageCode): A
     explainPrompt(r.summary, r.redFlags.map((f) => `"${f.quote}" (${f.why})`), r.advice, language),
   ).text;
   const mode = language === 'en' ? InferenceMode.PREFER_ON_DEVICE : InferenceMode.PREFER_IN_CLOUD;
-  const stream = await model(mode).generateContentStream(prompt);
   let text = '';
-  for await (const chunk of stream.stream) {
-    text += chunk.text();
-    yield { text, source: (chunk.inferenceSource ?? 'in_cloud') as Source };
+  try {
+    const stream = await model(mode).generateContentStream(prompt);
+    for await (const chunk of stream.stream) {
+      text += chunk.text();
+      yield { text, source: (chunk.inferenceSource ?? 'in_cloud') as Source };
+    }
+  } catch (e) {
+    // Streams occasionally fail to parse mid-flight; retry once without streaming
+    // if nothing was shown yet, otherwise keep the partial answer.
+    if (text) return;
+    const res = await model(mode).generateContent(prompt);
+    yield { text: res.response.text(), source: (res.response.inferenceSource ?? 'in_cloud') as Source };
+    void e;
   }
 }
 
