@@ -1,0 +1,61 @@
+/* Hosted page layout. Tokens come from ../ui/styles.css (Ember / Nebula). */
+html { scroll-behavior: smooth; }
+a { color: inherit; }
+
+.site-top {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  max-width: 1180px; margin: 0 auto; padding: 14px 16px;
+  background: color-mix(in oklab, var(--background) 86%, transparent);
+  backdrop-filter: blur(16px) saturate(125%);
+}
+@media (prefers-reduced-transparency: reduce) { .site-top { background: var(--background); backdrop-filter: none; } }
+.site-top .brand { text-decoration: none; }
+.site-top nav { display: flex; gap: 4px; }
+.nav-link { height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; font-size: 13px; color: var(--ink-2); text-decoration: none; transition: color 160ms, background-color 160ms; }
+.nav-link:hover { color: var(--foreground); background: var(--muted); }
+
+.site {
+  max-width: 1180px; margin: 0 auto; padding: 8px 16px 40px;
+  display: grid; gap: 28px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'hero' 'app' 'how';
+}
+.hero { grid-area: hero; min-width: 0; display: grid; gap: 18px; padding-top: 16px; align-content: start; }
+.app-col { grid-area: app; min-width: 0; }
+.how { grid-area: how; min-width: 0; display: grid; gap: 16px; }
+
+@media (min-width: 960px) {
+  .site { grid-template-columns: minmax(0, 1fr) 440px; grid-template-areas: 'hero app' 'how app'; column-gap: 48px; align-items: start; }
+  .app-col { position: sticky; top: 72px; }
+  .hero { padding-top: 48px; }
+}
+
+.hero-title {
+  font-family: var(--font-display); font-weight: 600;
+  font-size: clamp(2.75rem, 8vw, 5.25rem); line-height: 0.96; letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.lede { font-size: 17px; line-height: 1.6; color: var(--ink-2); max-width: 36rem; text-wrap: pretty; }
+.facts { list-style: none; padding: 0; margin: 4px 0 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); max-width: 40rem; }
+.facts .tile { display: grid; gap: 6px; }
+.fact { font-family: var(--font-display); font-size: 16px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 500; }
+
+.app-col .shell { padding: 0; max-width: none; }
+/* The page header carries the brand; the app keeps its engine status chip. */
+.app-col .shell > .top .brand { display: none; }
+.app-col .shell > .top { padding: 0 6px; }
+.app-col .shell > .top::before { content: 'AI engine'; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
+.app-col .shell { position: relative; }
+
+.section-title { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.6rem, 3.6vw, 2.25rem); line-height: 1.08; letter-spacing: -0.025em; max-width: 30ch; text-wrap: balance; }
+.steps-grid { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); }
+.steps-grid .bento { display: grid; gap: 8px; align-content: start; }
+.steps-grid h3 { font-family: var(--font-display); font-size: 17px; line-height: 1.2; letter-spacing: -0.01em; font-weight: 600; }
+.steps-grid p { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); text-wrap: pretty; }
+.step-num { font-family: var(--font-mono); font-size: 11px; color: var(--signal-ink); letter-spacing: 0.06em; }
+code { font-family: var(--font-mono); font-size: 0.9em; background: var(--muted); border-radius: 6px; padding: 1px 5px; }
+.note { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); max-width: 44rem; }
+.note a { color: var(--signal-ink); text-underline-offset: 3px; }
+
+.site-foot { max-width: 1180px; margin: 0 auto; padding: 20px 16px 32px; text-align: center; font-size: 10px; }

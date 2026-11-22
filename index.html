@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Scam Shield · Check before you pay</title>
+    <meta name="description" content="Check SMS, WhatsApp and email messages for scams. Gemini Nano reads them on your device; the cloud only ever gets a redacted copy. Built with Firebase AI Logic hybrid inference." />
+    <meta property="og:title" content="Scam Shield · Check before you pay" />
+    <meta property="og:description" content="Private scam checks with on-device AI and a redacted cloud fallback." />
+    <link rel="icon" href="/icon-128.png" />
+  </head>
+  <body>
+    <header class="site-top">
+      <a class="brand" href="/" aria-label="Scam Shield home">
+        <span class="mark" data-icon="shield"></span>
+        <span class="wordmark">Scam Shield</span>
+      </a>
+      <nav>
+        <a class="nav-link" href="#how">How it works</a>
+        <a class="nav-link" href="https://github.com/Yuguda999/scam-shield" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="site">
+      <section class="hero">
+        <p class="readout">#BuildHybridAI · Firebase AI Logic</p>
+        <h1 class="hero-title">Check before<br />you pay.</h1>
+        <p class="lede">
+          Fake credit alerts, “BVN update” links, job offers with a training fee. Paste any message and Scam Shield tells you
+          if it is a scam. Gemini Nano reads it on your own device. When the cloud is needed, it gets a redacted copy, and only
+          after you say yes.
+        </p>
+        <ul class="facts" role="list">
+          <li class="tile"><p class="readout">On device</p><p class="fact">Gemini Nano in Chrome</p></li>
+          <li class="tile"><p class="readout">Cloud</p><p class="fact">Redacted copy only</p></li>
+          <li class="tile"><p class="readout">Languages</p><p class="fact">Hausa, Yorùbá, Igbo, Pidgin, English</p></li>
+        </ul>
+      </section>
+
+      <div class="app-col"><main id="app" aria-label="Scam checker"></main></div>
+
+      <section id="how" class="how">
+        <p class="readout">How it works</p>
+        <h2 class="section-title">Your message never leaves your device unredacted.</h2>
+        <ol class="steps-grid" role="list">
+          <li class="bento">
+            <span class="step-num tabular">01</span>
+            <h3>Read on your device</h3>
+            <p>If Chrome has Gemini Nano, the check runs locally with Firebase AI Logic in <code>ONLY_ON_DEVICE</code> mode. Nothing is sent anywhere.</p>
+          </li>
+          <li class="bento">
+            <span class="step-num tabular">02</span>
+            <h3>Redact before the cloud</h3>
+            <p>No local model, or a very long message? Phone and account numbers, BVN, OTPs, cards, emails, link paths and names are removed on your device first. You see the exact text, then choose.</p>
+          </li>
+          <li class="bento">
+            <span class="step-num tabular">03</span>
+            <h3>Warn others</h3>
+            <p>Share the redacted copy and see how many people reported the same message this week. Explanations come in Hausa, Yorùbá, Igbo and Pidgin.</p>
+          </li>
+        </ol>
+        <p class="note">
+          Built on Firebase AI Logic hybrid inference, App Check, Remote Config, Authentication and Firestore.
+          Open source under Apache-2.0. Get the Chrome extension from the
+          <a href="https://github.com/Yuguda999/scam-shield#run-it">GitHub repository</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-foot readout">Scam Shield · Apache-2.0 · Not affiliated with any bank</footer>
+    <script type="module" src="/src/web/main.ts"></script>
+  </body>
+</html>
