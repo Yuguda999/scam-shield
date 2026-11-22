@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Scam Shield",
+  "version": "0.1.0",
+  "description": "Check messages for scams privately with on-device AI, with redacted cloud fallback. Built on Firebase AI Logic.",
+  "minimum_chrome_version": "139",
+  "action": { "default_title": "Open Scam Shield" },
+  "side_panel": { "default_path": "src/ext/sidepanel.html" },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "permissions": ["sidePanel", "contextMenus", "storage", "activeTab", "scripting"],
+  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" }
+}
