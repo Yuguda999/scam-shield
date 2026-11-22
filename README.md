@@ -2,6 +2,8 @@
 
 **Check before you pay.** Scam Shield checks SMS, WhatsApp messages, emails and web pages for scams. It reads your messages with the AI on your own device, and anything that has to go to the cloud is redacted first.
 
+**Try it:** https://scam-shield-hybrid.web.app (works in any browser; Chrome with Gemini Nano runs checks on-device).
+
 Built for [#BuildHybridAI 2026](https://firebasehybridaihackathon.devpost.com/) with [Firebase AI Logic hybrid inference](https://firebase.google.com/docs/ai-logic/hybrid).
 
 ## The problem
@@ -24,7 +26,9 @@ Why not just use `PREFER_ON_DEVICE` for everything? When no local model exists, 
 
 Other Firebase products:
 
-- **App Check** protects the Gemini API. The Chrome extension uses a debug token, because MV3 extensions cannot load reCAPTCHA.
+- **App Check** protects the Gemini API: reCAPTCHA Enterprise (Fraud Defense) on the hosted site, a debug token in the Chrome extension (MV3 extensions cannot load reCAPTCHA). Public web builds have the debug token stripped at build time.
+- **Authentication** (anonymous) and **Firestore** store community reports: redacted text only, append-only, field-validated by [`firestore.rules`](firestore.rules).
+- **Hosting** serves the web app.
 - **Remote Config** pushes new scam patterns, the on-device length limit and the cloud model name without a new release.
 - Structured output uses one JSON Schema for both paths: `responseConstraint` on-device and `responseJsonSchema` in the cloud.
 
@@ -49,8 +53,19 @@ pnpm build                   # outputs dist/ext
 2. Open `chrome://extensions`, turn on **Developer mode**, click **Load unpacked** and choose `dist/ext`.
 3. Click the Scam Shield icon to open the side panel. If the status chip says "tap to download", click it to fetch Gemini Nano. Until the model is ready, checks use the redacted cloud path.
 
+### Web app
+
 ```bash
-pnpm test        # unit tests: redaction, routing, output parsing
+echo 'VITE_RECAPTCHA_SITE_KEY=<your reCAPTCHA Enterprise key>' > .env.web
+pnpm build:web          # dist/web, debug token stripped
+pnpm deploy:web         # Firebase Hosting
+pnpm deploy:rules       # Firestore rules
+```
+
+Register the same key under **App Check → Fraud Defense** for your web app, with your hosting domain in the key's domain list.
+
+```bash
+pnpm test        # unit tests: redaction, routing, community, output parsing
 pnpm typecheck
 ```
 
@@ -61,6 +76,7 @@ src/core/       pure logic: redaction, routing, prompts, schema, parsing (unit-t
 src/firebase/   Firebase app, App Check, Remote Config, hybrid model calls
 src/ui/         side panel UI (no framework, model output rendered as text only)
 src/ext/        Chrome extension entry points (side panel, service worker)
+src/web/        hosted web app entry (landing section + checker)
 public/         manifest and icons
 ```
 

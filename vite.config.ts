@@ -4,7 +4,7 @@ import { defineConfig, loadEnv, type UserConfig } from 'vite';
 /**
  * Two targets:
  *   vite build              -> dist/ext  Chrome extension (Load unpacked). App Check: debug token from .env.local.
- *   vite build --mode web   -> dist/web  Hosted web app. App Check: reCAPTCHA v3 site key from .env.web.
+ *   vite build --mode web   -> dist/web  Hosted web app. App Check: reCAPTCHA Enterprise (Fraud Defense) site key from .env.web.
  *
  * The public web build must never contain the App Check debug token, so it is
  * blanked out with `define` whenever a reCAPTCHA site key is configured.

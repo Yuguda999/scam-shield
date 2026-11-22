@@ -1,5 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { CustomProvider, initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { CustomProvider, initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { getAI, GoogleAIBackend, type AI } from 'firebase/ai';
 import { fetchAndActivate, getNumber, getRemoteConfig, getString, type RemoteConfig } from 'firebase/remote-config';
 import { firebaseConfig } from './config';
@@ -29,7 +29,7 @@ let rc: RemoteConfig | undefined;
 
 export function firebase(): { app: FirebaseApp; ai: AI } {
   if (!app) {
-    // Hosted web: reCAPTCHA v3 attests real browsers.
+    // Hosted web: reCAPTCHA Enterprise (Fraud Defense) attests real browsers.
     // Chrome extension: MV3 forbids remote code, so reCAPTCHA cannot load; the
     // extension uses an App Check debug token registered in the Firebase console.
     const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined;
@@ -39,7 +39,7 @@ export function firebase(): { app: FirebaseApp; ai: AI } {
     app = initializeApp(firebaseConfig);
     initializeAppCheck(app, {
       provider: useRecaptcha
-        ? new ReCaptchaV3Provider(siteKey!)
+        ? new ReCaptchaEnterpriseProvider(siteKey!)
         : new CustomProvider({
             getToken: () => Promise.reject(new Error('App Check runs in debug-token mode in this build.')),
           }),

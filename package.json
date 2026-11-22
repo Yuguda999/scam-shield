@@ -8,7 +8,10 @@
     "dev": "vite build --watch --mode development",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:web": "vite build --mode web",
+    "deploy:web": "vite build --mode web && firebase deploy --only hosting",
+    "deploy:rules": "firebase deploy --only firestore:rules"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.3.0",
@@ -19,6 +22,7 @@
   },
   "devDependencies": {
     "@types/chrome": "^0.3.7",
+    "firebase-tools": "^15.37.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.1"
