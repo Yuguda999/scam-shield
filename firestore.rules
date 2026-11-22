@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// Community scam reports. Reports only ever contain text that was redacted on
+// the reporter's device, so any signed-in (anonymous) user may read them.
+// Reports are append-only: no updates or deletes from clients.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /reports/{reportId} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(
+             ['uid', 'createdAt', 'week', 'fingerprint', 'scamType', 'verdict', 'risk', 'text', 'flags', 'source'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.week is string && request.resource.data.week.size() <= 10
+        && request.resource.data.fingerprint is string && request.resource.data.fingerprint.size() == 64
+        && request.resource.data.scamType is string && request.resource.data.scamType.size() <= 40
+        && request.resource.data.verdict in ['scam', 'suspicious']
+        && request.resource.data.risk is int && request.resource.data.risk >= 0 && request.resource.data.risk <= 100
+        && request.resource.data.text is string && request.resource.data.text.size() <= 2000
+        && request.resource.data.flags is list && request.resource.data.flags.size() <= 4
+        && request.resource.data.source in ['on_device', 'in_cloud'];
+
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

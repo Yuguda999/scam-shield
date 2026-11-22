@@ -1,5 +1,6 @@
 import { h, redactedView } from './dom';
 import { deviceAvailability, explain, LANGUAGES, plan, prepareDeviceModel, runCheck, type Plan } from '../firebase/checker';
+import { communityText, report, seenThisWeek, trendsThisWeek } from '../firebase/community';
 import { ROUTE_LABELS, type DeviceAvailability } from '../core/router';
 import type { LanguageCode } from '../core/prompts';
 import type { CheckOutcome, ScamType, Source } from '../core/types';
@@ -68,6 +69,7 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
     ),
     h('section', { class: 'card input' }, input, h('div', { class: 'row' }, checkBtn, pageBtn), samples),
     out,
+    trendsPanel(),
     h('footer', { class: 'muted' }, '🔒 Raw messages are only read by the AI on your device. Anything sent to the cloud is redacted first.'),
   );
 
@@ -139,7 +141,7 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
     out.replaceChildren(spinner(p.decision.target === 'on_device' ? 'Checking privately on this device…' : 'Checking redacted copy in the cloud…'));
     try {
       const outcome = await runCheck(text, p);
-      out.replaceChildren(resultCard(outcome));
+      out.replaceChildren(resultCard(outcome, text));
     } catch (e) {
       showError(e);
     } finally {
@@ -178,8 +180,9 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
     );
   }
 
-  function resultCard(o: CheckOutcome): HTMLElement {
+  function resultCard(o: CheckOutcome, original: string): HTMLElement {
     const r = o.result;
+    const community = communitySection(o, original);
     const explainOut = h('div', { class: 'explain' });
     const langButtons = (Object.keys(LANGUAGES) as LanguageCode[]).map((code) =>
       h('button', { class: 'pill', onclick: () => void doExplain(code) }, LANGUAGES[code].replace('simple ', '')),
@@ -223,6 +226,7 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
           )
         : null,
       r.advice.length ? h('div', {}, h('h3', {}, 'What to do'), h('ol', { class: 'advice' }, ...r.advice.map((a) => h('li', {}, a)))) : null,
+      community,
       h('div', { class: 'meta' }, sourceBadge(o.source, o.redacted), h('span', { class: 'muted small' }, `${(o.ms / 1000).toFixed(1)} s`)),
       h(
         'details',
@@ -238,6 +242,112 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
         ? h('button', { class: 'ghost wide', onclick: () => void start({ deepCheck: true, previous: o }) }, 'Second opinion from the cloud (redacted)')
         : null,
     );
+  }
+
+  /** "Seen N times this week" plus a consent-first "Report" flow. Only redacted text is ever shared. */
+  function communitySection(o: CheckOutcome, original: string): HTMLElement {
+    const box = h('div', { class: 'community' });
+    const seen = h('p', { class: 'seen small muted' }, 'Checking community reports…');
+    box.append(seen);
+    let redacted: Promise<string> | undefined;
+    const getRedacted = () => (redacted ??= communityText(o, original));
+
+    void (async () => {
+      try {
+        const n = await seenThisWeek(await getRedacted());
+        seen.className = `seen small ${n ? 'hot' : 'muted'}`;
+        seen.textContent = n
+          ? `👥 ${n} ${n === 1 ? 'person has' : 'people have'} reported this message this week.`
+          : 'No one has reported this exact message this week.';
+      } catch (e) {
+        console.warn('community lookup failed', e);
+        seen.remove();
+      }
+    })();
+
+    if (o.result.verdict === 'safe') return box;
+
+    const reportBtn = h('button', {
+      class: 'ghost wide',
+      onclick: async () => {
+        reportBtn.disabled = true;
+        const text = await getRedacted();
+        reportBtn.replaceWith(
+          h(
+            'div',
+            { class: 'consent-inline' },
+            h('p', { class: 'small' }, 'Share this redacted copy so others are warned? Your name, numbers and links are removed:'),
+            redactedView(text),
+            h(
+              'div',
+              { class: 'row' },
+              h('button', {
+                class: 'primary',
+                onclick: async (e: Event) => {
+                  const btn = e.currentTarget as HTMLButtonElement;
+                  btn.disabled = true;
+                  try {
+                    await report(o, text);
+                    box.querySelector('.consent-inline')?.replaceWith(h('p', { class: 'small ok' }, '✅ Reported. Thank you for warning others.'));
+                    const n = await seenThisWeek(text);
+                    seen.className = 'seen small hot';
+                    seen.textContent = `👥 ${n} ${n === 1 ? 'person has' : 'people have'} reported this message this week.`;
+                    void loadTrends();
+                  } catch (err) {
+                    btn.disabled = false;
+                    box.append(h('p', { class: 'small error' }, errorText(err)));
+                  }
+                },
+              }, 'Share redacted report'),
+              h('button', { class: 'ghost', onclick: () => box.querySelector('.consent-inline')?.replaceWith(reportBtn) }, 'Cancel'),
+            ),
+          ),
+        );
+        reportBtn.disabled = false;
+      },
+    }, '📣 Report to warn others');
+    box.append(reportBtn);
+    return box;
+  }
+
+  const trendsList = h('div', { class: 'trends' });
+  function trendsPanel(): HTMLElement {
+    const d = h(
+      'details',
+      { class: 'card' },
+      h('summary', {}, 'What’s going around this week'),
+      trendsList,
+    );
+    d.addEventListener('toggle', () => {
+      if (d.open) void loadTrends();
+    });
+    return d;
+  }
+
+  async function loadTrends(): Promise<void> {
+    trendsList.replaceChildren(spinner('Loading community reports…'));
+    try {
+      const { total, rows } = await trendsThisWeek();
+      if (!total) {
+        trendsList.replaceChildren(h('p', { class: 'small muted' }, 'No reports yet this week. Be the first to warn others.'));
+        return;
+      }
+      const max = rows[0]!.count;
+      trendsList.replaceChildren(
+        h('p', { class: 'small muted' }, `${total} redacted ${total === 1 ? 'report' : 'reports'} from Scam Shield users this week`),
+        ...rows.slice(0, 6).map((row) =>
+          h(
+            'div',
+            { class: 'trend' },
+            h('span', {}, SCAM_LABELS[row.scamType as ScamType] ?? row.scamType),
+            h('span', { class: 'bar', style: `--w:${Math.max(8, Math.round((row.count / max) * 100))}%` }),
+            h('strong', {}, String(row.count)),
+          ),
+        ),
+      );
+    } catch (e) {
+      trendsList.replaceChildren(h('p', { class: 'small error' }, errorText(e)));
+    }
   }
 
   function showError(e: unknown): void {

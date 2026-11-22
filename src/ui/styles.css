@@ -124,4 +124,14 @@ details > * + * { margin-top: 6px; }
 .explain { margin-top: 10px; display: grid; gap: 6px; }
 .explain:empty { display: none; }
 .error { color: var(--scam); }
+.ok { color: var(--safe); }
+.community { margin-top: 12px; display: grid; gap: 8px; }
+.community .wide { margin-top: 0; }
+.seen.hot { color: var(--warn); font-weight: 600; }
+.consent-inline { display: grid; gap: 8px; }
+details.card > summary { font-weight: 600; color: var(--ink); }
+.trends { display: grid; gap: 8px; margin-top: 10px; }
+.trend { display: grid; grid-template-columns: 1fr 90px 28px; align-items: center; gap: 8px; font-size: 14px; }
+.trend .bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--warn) var(--w), var(--line) var(--w)); }
+.trend strong { text-align: right; }
 footer { font-size: 12px; text-align: center; padding: 0 8px; }
