@@ -126,8 +126,10 @@ export function redact(input: string, names: string[] = []): RedactionResult {
     });
   }
 
-  // Person names found by the on-device model (or the user) are replaced last.
-  for (const raw of names) {
+  // Person names found by the on-device model (or the user) are replaced last,
+  // plus names caught by simple patterns so redaction still works when no
+  // on-device model is available ("Dear Amina", "this is Tunde", "Mr. Okafor").
+  for (const raw of [...names, ...heuristicNames(text)]) {
     const name = raw.trim();
     if (name.length < 2) continue;
     const re = new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
@@ -137,4 +139,29 @@ export function redact(input: string, names: string[] = []): RedactionResult {
   }
 
   return { text, redactions };
+}
+
+const NOT_NAMES = new Set(
+  'customer customers sir madam ma user client friend dear all team valued esteemed winner beneficiary account holder the a an our your'.split(' '),
+);
+const CAP = "[A-Z][a-z'’-]+";
+const NAME_PATTERNS = [
+  new RegExp(`\\b(?:Dear|Hello|Hi|Hey)\\s+(${CAP}(?:\\s+${CAP})?)`, 'g'),
+  new RegExp(`\\b(?:[Tt]his is|I am|I'm|[Mm]y name is|[Nn]ame is)\\s+(${CAP}(?:\\s+${CAP})?)`, 'g'),
+  new RegExp(`\\b(?:Mr|Mrs|Ms|Miss|Dr|Engr|Barr|Chief|Alhaji|Alhaja|Pastor|Prof)\\.?\\s+(${CAP}(?:\\s+${CAP})?)`, 'g'),
+  // Bank-alert style "TRF FROM CHIOMA OKAFOR" / "FROM: JOHN DOE"
+  /\b(?:FROM|TO|BY)\s*:?\s+([A-Z]{2,}(?:\s+[A-Z]{2,}){1,2})\b/g,
+];
+
+/** Very small rule-based name finder used when the on-device model is unavailable. */
+export function heuristicNames(text: string): string[] {
+  const found = new Set<string>();
+  for (const re of NAME_PATTERNS) {
+    for (const m of text.matchAll(re)) {
+      const words = (m[1] ?? '').split(/\s+/).filter((w) => !NOT_NAMES.has(w.toLowerCase()));
+      // Stop at words that are clearly not part of a name (e.g. "Tunde from").
+      if (words.length) found.add(words.join(' '));
+    }
+  }
+  return [...found];
 }

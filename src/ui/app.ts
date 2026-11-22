@@ -59,6 +59,7 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
     ),
   );
   const out = h('section', { class: 'out', 'aria-live': 'polite' });
+  const trendsList = h('div', { class: 'trends' });
 
   root.append(
     h(
@@ -276,7 +277,7 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
           h(
             'div',
             { class: 'consent-inline' },
-            h('p', { class: 'small' }, 'Share this redacted copy so others are warned? Your name, numbers and links are removed:'),
+            h('p', { class: 'small' }, 'Share this copy so others are warned? Personal details were removed on your device. Only this text will be shared:'),
             redactedView(text),
             h(
               'div',
@@ -310,7 +311,6 @@ export function mountApp(root: HTMLElement, host: Host): { checkText(text: strin
     return box;
   }
 
-  const trendsList = h('div', { class: 'trends' });
   function trendsPanel(): HTMLElement {
     const d = h(
       'details',

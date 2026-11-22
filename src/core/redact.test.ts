@@ -40,6 +40,13 @@ describe('redact', () => {
     expect(r.text).toBe('Dear [NAME_1], reply to [EMAIL_1]');
   });
 
+  it('finds common name patterns without a model', () => {
+    expect(redact('Hi, this is Tunde from HR at Dangote Group.').text).toBe('Hi, this is [NAME_1] from HR at Dangote Group.');
+    expect(redact('Dear Customer, your account is blocked').text).toBe('Dear Customer, your account is blocked');
+    expect(redact('Desc: TRF FROM CHIOMA OKAFOR. Avail Bal').text).toBe('Desc: TRF FROM [NAME_1]. Avail Bal');
+    expect(redact('Contact Mr. Adebayo today').text).toBe('Contact Mr. [NAME_1] today');
+  });
+
   it('leaves clean text alone', () => {
     const msg = 'Congratulations! You have won a brand new car. Pay delivery fee today.';
     expect(redact(msg)).toEqual({ text: msg, redactions: [] });
