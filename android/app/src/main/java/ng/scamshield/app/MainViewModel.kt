@@ -2,6 +2,7 @@ package ng.scamshield.app
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -108,6 +109,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         try {
             val outcome = engine.run(text, p)
+            Log.i("ScamShield", "check: ${outcome.result.verdict} risk=${outcome.result.risk} source=${outcome.source} route=${outcome.route} ai=${outcome.ms}ms")
             _state.update { it.copy(screen = Screen.Result(outcome, text), busy = false) }
             loadCommunity(outcome, text)
         } catch (e: Exception) {
@@ -118,8 +120,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private fun loadCommunity(outcome: CheckOutcome, original: String) = viewModelScope.launch {
         try {
             val redacted = engine.communityText(outcome, original).also { communityRedacted = it }
-            _state.update { it.copy(community = Community.Count(engine.seenThisWeek(redacted))) }
+            val n = engine.seenThisWeek(redacted)
+            Log.i("ScamShield", "community: seen $n time(s) this week")
+            _state.update { it.copy(community = Community.Count(n)) }
         } catch (e: Exception) {
+            Log.w("ScamShield", "community lookup failed", e)
             _state.update { it.copy(community = Community.Unavailable) }
         }
     }
@@ -138,6 +143,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             val n = engine.seenThisWeek(redacted)
             _state.update { it.copy(report = ReportState.Done, community = Community.Count(n)) }
         } catch (e: Exception) {
+            Log.w("ScamShield", "report failed", e)
             _state.update { it.copy(report = ReportState.Failed(friendly(e))) }
         }
     }
@@ -156,7 +162,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private fun fail(e: Exception) = _state.update { it.copy(screen = Screen.Error(friendly(e)), busy = false) }
+    private fun fail(e: Exception) = Log.w("ScamShield", "check failed", e).let { _ -> _state.update { it.copy(screen = Screen.Error(friendly(e)), busy = false) } }
 
     private fun friendly(e: Exception): String {
         val m = e.message.orEmpty()

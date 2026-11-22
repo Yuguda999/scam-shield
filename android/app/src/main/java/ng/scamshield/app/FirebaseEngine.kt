@@ -83,7 +83,9 @@ class FirebaseEngine : Engine {
                     "scam_patterns" to Json.encodeToString(JsonArray.serializer(), JsonArray(DEFAULT_PATTERNS.map(::JsonPrimitive))),
                 ),
             ).await()
-            runCatching { rc.fetchAndActivate().await() } // offline is fine: defaults / last values apply
+            // Don't block the first check on the network: use defaults / last activated values now,
+            // fetch in the background and activate for the next launch.
+            rc.fetch().addOnSuccessListener { rc.activate() }
             val patterns = runCatching {
                 Json.parseToJsonElement(rc.getString("scam_patterns")).let { it as JsonArray }.map { (it as JsonPrimitive).content }
             }.getOrNull()?.takeIf { it.isNotEmpty() } ?: DEFAULT_PATTERNS
@@ -215,7 +217,18 @@ class FirebaseEngine : Engine {
         val q = Firebase.firestore.collection("reports")
             .whereEqualTo("fingerprint", fingerprint(redactedText))
             .whereEqualTo("week", isoWeek())
-        return q.count().get(AggregateSource.SERVER).await().count.toInt()
+        // Mobile networks drop DNS lookups now and then; Firestore's gRPC channel
+        // recovers on its own, so retry a few times before giving up.
+        var last: Exception? = null
+        repeat(3) { attempt ->
+            try {
+                return q.count().get(AggregateSource.SERVER).await().count.toInt()
+            } catch (e: Exception) {
+                last = e
+                kotlinx.coroutines.delay(2000L shl attempt)
+            }
+        }
+        throw last!!
     }
 
     override suspend fun report(outcome: CheckOutcome, redactedText: String) {
